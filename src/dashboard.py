@@ -3,8 +3,9 @@ import streamlit as st
 import joblib
 import os
 
-# Resolve path to models folder (project root)
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models")
+# Resolve path to project root
+PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
 
 # Load vectorizer and models safely
 vectorizer = joblib.load(os.path.join(MODEL_DIR, "vectorizer.pkl"))
