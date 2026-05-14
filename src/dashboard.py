@@ -1,43 +1,36 @@
 # src/dashboard.py
 import streamlit as st
 import joblib
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
-from preprocessing import load_data
+import os
 
-st.set_page_config(page_title="Spam Email Detector", page_icon="📧")
+# Resolve path to models folder (project root)
+MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models")
 
-st.title("📧 Spam Email Detector")
-st.write("Enter an email or SMS text below to check if it's Spam or Ham.")
+# Load vectorizer and models safely
+vectorizer = joblib.load(os.path.join(MODEL_DIR, "vectorizer.pkl"))
+nb_model = joblib.load(os.path.join(MODEL_DIR, "naive_bayes.pkl"))
+svm_model = joblib.load(os.path.join(MODEL_DIR, "svm.pkl"))
 
-vectorizer = joblib.load("../models/vectorizer.pkl")
-model = joblib.load("../models/svm.pkl")
+st.title("Spam Email Detector")
+st.subheader("Enter an email or SMS text below to check if it's Spam or Ham.")
 
-user_input = st.text_area("Email/SMS Text:")
+# User input
+user_input = st.text_area("Message:")
+
+# Choose model
+model_choice = st.selectbox("Choose model", ["Naive Bayes", "SVM"])
 
 if st.button("Predict"):
-    X = vectorizer.transform([user_input])
-    prediction = model.predict(X)[0]
-    confidence = model.decision_function(X)[0]
-    st.success(f"Prediction: {'Spam' if prediction == 1 else 'Ham'} (Confidence: {confidence:.2f})")
+    if user_input.strip():
+        # Transform input
+        X = vectorizer.transform([user_input])
 
-# Extra Feature: WordCloud visualization
-st.subheader("📊 Spam vs Ham WordCloud")
-df = load_data()
-spam_texts = " ".join(df[df['label']==1]['text'])
-ham_texts = " ".join(df[df['label']==0]['text'])
+        # Predict
+        if model_choice == "Naive Bayes":
+            prediction = nb_model.predict(X)[0]
+        else:
+            prediction = svm_model.predict(X)[0]
 
-col1, col2 = st.columns(2)
-with col1:
-    st.write("Spam WordCloud")
-    wc_spam = WordCloud(width=400, height=300, background_color="black").generate(spam_texts)
-    plt.imshow(wc_spam, interpolation="bilinear")
-    plt.axis("off")
-    st.pyplot(plt)
-
-with col2:
-    st.write("Ham WordCloud")
-    wc_ham = WordCloud(width=400, height=300, background_color="white").generate(ham_texts)
-    plt.imshow(wc_ham, interpolation="bilinear")
-    plt.axis("off")
-    st.pyplot(plt)
+        st.success(f"Prediction: {'Spam' if prediction == 1 else 'Ham'}")
+    else:
+        st.warning("Please enter a message to classify.")
