@@ -1,7 +1,10 @@
-# Dependencies required for running the local Streamlit dashboard
-streamlit
-pandas
-matplotlib
-wordcloud
+flask
 joblib
 scikit-learn
+nltk
+pandas
+numpy
+matplotlib
+seaborn
+wordcloud
+streamlit

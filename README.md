@@ -1,111 +1,98 @@
-# ThreatMail - Spam Email Detector & Intelligence Dashboard
+# ThreatMail Enterprise - Spam Email Detection System
 
-ThreatMail is an AI-powered email classification and intelligence platform. It processes raw email content to filter out malicious communications (Spam) from legitimate messages (Ham) using trained machine learning classifiers (Naive Bayes and Support Vector Machines), achieving a classification accuracy of **95%+**.
+An end-to-end Machine Learning spam classification and NLP threat audit system. It executes comparative training grid searches across 8 configurations (Count Vectorizer, TF-IDF Vectorizer vs Naive Bayes, Logistic Regression, Linear SVM, Random Forest), automatically serializes the best performing model, and serves it via an interactive Flask web console logging transactions to a local SQLite database.
 
 ---
 
-## 🚀 Features
-
-1. **Serverless REST API (Flask)**:
-   - Lightweight API backend ready to serve real-time predictions.
-   - Deployed on **Vercel** with fully resolved paths and size-optimized dependencies.
-2. **Interactive Intelligence Dashboard (Streamlit)**:
-   - **Real-Time Tester**: Paste any email body to test classification and receive model confidence scores.
-   - **Exploratory Analytics**: Visually explore spam vs. ham token distributions and high-frequency terms.
-   - **Dynamic Word Clouds**: Compare the most frequent vocabularies of legitimate vs. spam emails.
-   - **Model Metrics**: Review precision, recall, F1-scores, and confusion matrices for Naive Bayes and SVM classifiers.
+## 🚀 Key Features
+1. **Grid Comparison Training**: Evaluates 8 combinations of vectorization features and machine learning algorithms, tracking Accuracy, Precision, Recall, and F1-Scores.
+2. **NLTK Preprocessing Pipeline**: Tokenization, regex normalizations (URLs, emails, digits), punctuation removal, English stopword stripping, and WordNet Lemmatization.
+3. **Enterprise Web UI Console**: Two-column responsive dark console layout:
+   - **Left**: Mail Inspector text area with pre-loaded mock email templates for testing.
+   - **Right**: NLP Analysis metrics (word counts, capitalization density), dynamic risk checks, and model term weight contributions.
+4. **SQLite Prediction Audit Log**: Exposes a real-time table at the bottom of the console pulling the latest prediction transactions logged to the local database file.
+5. **Vercel Serverless Ready**: Dynamic model-loading paths, size-optimized dependency configurations, and writable database directories for zero-config serverless deployments.
 
 ---
 
 ## 📁 Repository Structure
-
 ```
 spam-email-detector/
 │
 ├── models/                   # Serialized ML model binaries (.pkl)
-│   ├── naive_bayes.pkl       # Naive Bayes classifier weights
-│   ├── svm.pkl               # Trained SVM model binary
-│   └── vectorizer.pkl        # TF-IDF CountVectorizer model
+│   ├── model.pkl             # Best-performing trained classifier
+│   ├── vectorizer.pkl        # Best-performing Count/TF-IDF Vectorizer
+│   └── comparison_report.txt # Text file summarizing grid metric scores
 │
 ├── src/                      # Source code
-│   ├── app.py                # Serverless Flask API entrypoint (Vercel ready)
-│   ├── dashboard.py          # Interactive Streamlit Dashboard application
-│   ├── preprocessing.py      # Token cleaning and regex helper methods
-│   ├── train.py              # ML training script compiling models
-│   └── evaluate.py           # Model testing and validation report generator
+│   ├── app.py                # Serverless Flask application & SQLite logger
+│   ├── preprocessing.py      # NLTK tokenization, stopwords, and lemmatization
+│   ├── train.py              # Grid search training & auto-serialization script
+│   └── evaluate.py           # Metrics calculation & confusion matrix generator
 │
-├── requirements.txt          # Production dependencies (pruned for Vercel)
-├── local_requirements.txt    # Local dependencies (including Streamlit & Matplotlib)
-└── vercel.json               # Vercel serverless configuration file
+├── requirements.txt          # Production dependencies (optimized for Vercel size limit)
+├── local_requirements.txt    # Local dependencies (for grid training and analytics)
+├── vercel.json               # Vercel serverless functions configuration
+├── PROJECT_REPORT.md         # Full project report containing architectural diagrams
+└── confusion_matrices.png    # Exported Seaborn heatmap of the model outcomes
 ```
 
 ---
 
-## 🛠️ Installation & Setup
+## 🛠️ Local Installation & Usage
 
-### 1. Local Setup
-Clone the repository and install the local requirements (which include the interactive dashboard dependencies):
+### 1. Project Setup
+Clone the repository and install local training/eval requirements:
 ```bash
 git clone https://github.com/SakshiBodke01/spam-email-detector.git
 cd spam-email-detector
 pip install -r local_requirements.txt
 ```
 
-### 2. Run the Interactive Dashboard
-Launch the Streamlit dashboard on your local server:
+### 2. Execute Grid Training
+Run the training pipeline. It downloads the SMS Collection dataset, applies the preprocessing rules, evaluates all 8 model configurations, logs the comparison matrix, and saves the best model to the `models/` directory:
 ```bash
-streamlit run src/dashboard.py
+python src/train.py
 ```
-This will open the intelligence UI in your web browser, typically at `http://localhost:8501`.
 
-### 3. Run the Flask API Locally
-Start the local development server for the REST API:
+### 3. Run Performance Evaluation
+Print the classification report and save the confusion matrix plot:
+```bash
+python src/evaluate.py
+```
+
+### 4. Start the Web Console
+Launch the Flask development server:
 ```bash
 python src/app.py
 ```
-The API will be active at `http://127.0.0.1:5000`.
+Open `http://127.0.0.1:5000` in your browser. You can input text or click the test templates to observe real-time classifications, risk triggers, and SQLite logging.
 
 ---
 
-## 📡 API Usage (Deployed on Vercel)
+## 📊 Visuals & System Architecture
+Detailed flowcharts, system deployment layouts, database ER diagrams, and mathematical formulations are documented in the **[PROJECT_REPORT.md](PROJECT_REPORT.md)**.
+- **System Architecture**: Browser Client $\leftrightarrow$ Flask Web Server $\leftrightarrow$ scikit-learn Predictor $\leftrightarrow$ SQLite DB logger.
+- **Database ERD**: Models predictions inside a `prediction_logs` table (`id`, `email_text`, `prediction`, `confidence`, `timestamp`).
 
-### 1. Home Endpoint (`GET /`)
-Check the service status and usage instructions.
-- **Request**:
-  ```bash
-  curl -X GET https://<your-vercel-app-url>/
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "active",
-    "service": "ThreatMail Spam Intelligence API",
-    "description": "An AI-powered service classifying input email content as Spam or Ham.",
-    "usage": {
-      "method": "POST",
-      "endpoint": "/predict",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "body": {
-        "text": "Your raw email text goes here"
-      }
+---
+
+## 📡 Live Production API
+
+- **GET `/`**: Serves the interactive Enterprise Threat Console UI.
+- **POST `/predict`**: Analyzes the raw email text payload and logs to SQLite.
+  - *Request Payload*: `{"text": "Your raw email body goes here"}`
+  - *Response*:
+    ```json
+    {
+      "prediction": "Spam",
+      "confidence": 0.9852,
+      "is_probability": true,
+      "metadata": { "word_count": 12, "char_count": 84, "caps_ratio": 0.45 },
+      "risk_flags": ["Financial / Promotional Keywords"],
+      "keywords": [
+        { "word": "won", "score": 1, "impact": 1.4820 }
+      ]
     }
-  }
-  ```
-
-### 2. Predict Endpoint (`POST /predict`)
-Send email content to receive a classification and confidence score.
-- **Request**:
-  ```bash
-  curl -X POST https://<your-vercel-app-url>/predict \
-    -H "Content-Type: application/json" \
-    -d '{"text": "Congratulations! You have won a free $1000 Walmart gift card. Click here to claim now."}'
-  ```
-- **Response**:
-  ```json
-  {
-    "prediction": "Spam",
-    "confidence": 1.482093
-  }
-  ```
+    ```
+- **GET `/logs`**: Retrieves the latest 10 prediction transactions logged in the SQLite audit database.
