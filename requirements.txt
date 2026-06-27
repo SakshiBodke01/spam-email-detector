@@ -1,7 +1,3 @@
-pandas
-scikit-learn
 flask
 joblib
-streamlit
-matplotlib
-wordcloud
+scikit-learn
